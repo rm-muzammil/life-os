@@ -18,6 +18,7 @@ const mono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: 'RoadmapOS — Germany 2028',
   description: 'Your personal OS for reaching top 0.1% German tech engineer by 2028',
+  manifest: "/manifest.json",
   icons: { icon: '/favicon.ico' },
 }
 
