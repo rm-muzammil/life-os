@@ -1,4 +1,15 @@
-
+// ─────────────────────────────────────────────────────────────────────────────
+// src/lib/weeklyRoadmap.ts
+//
+// THE SINGLE SOURCE OF TRUTH for what to do each week.
+// Every week has exactly 6 tasks — one per track (ML, Cloud, Backend, Data,
+// Project, German, MERN) selected by day-of-week on the dashboard.
+//
+// HOW IT WORKS:
+//   1. Auto-seeder calls getTasksForWeek(weekNum, dayOfWeek)
+//   2. Returns 3–4 tasks appropriate for TODAY's focus day
+//   3. Those are inserted into Supabase once per day (idempotent check first)
+// ─────────────────────────────────────────────────────────────────────────────
 
 import type { TaskTrack, TaskPriority } from '@/types'
 

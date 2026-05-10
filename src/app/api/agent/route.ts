@@ -12,23 +12,40 @@ ROADMAP CONTEXT:
 - Tracks: ML, Cloud, Backend, Data, Project, German, MERN
 
 PHASE GUIDE:
-Phase 1 (Wks 1-8): Sem4 active. Python, NumPy, Pandas, Docker basics, MERN freelancing, Project 1: GDPR RAG chatbot.
-Phase 2 (Wks 9-16): Uni ends Jul 1. PyTorch, neural nets, AWS basics, FastAPI, Spring Boot, Kafka intro.
+Phase 1 (Wks 1-8):   Sem4+Arabic active. Python, NumPy, Pandas, Docker basics, MERN freelancing, Project 1: GDPR RAG chatbot.
+Phase 2 (Wks 9-16):  Uni ends Jul 1. PyTorch, neural nets, AWS basics, FastAPI, Spring Boot, Kafka intro.
 Phase 3 (Wks 17-30): Fine-tuning LoRA, Kubernetes, Terraform, MLflow, RAG advanced, AWS SAA cert, German B1.
 Phase 4 (Wks 31-52): CKA, AWS PSA, CISM, Goethe B2, $18k freelance, Staff-level system design, job hunt.
 Phase 5 (Wks 53-78): Job offers, Germany move, €80-100k, GCP ML cert, $30k total.
-Phase 6 (Wks 79-104): Staff engineer, €150k+, C1 German, arXiv paper, $50k total.
+Phase 6 (Wks 79-104):Staff engineer, €150k+, C1 German, arXiv paper, $50k total.
 
 TASK QUALITY RULES:
-- Be extremely specific with concrete deliverables.
-- track MUST be exactly one of: ML, Cloud, Backend, Data, Project, German, MERN.
-- priority MUST be exactly one of: High, Medium, Low.
-- Hours must be between 0.5 and 3.0.
+- Be extremely specific: "Complete fast.ai Lesson 1, run notebook, write 5 Anki cards" NOT "learn ML"
+- Include a concrete deliverable in every task title
+- Hours: 0.5h = one sitting, 1.5h = deep work block, 3h = extended session
+- Tasks must match the current week and phase exactly
+- For Projects: reference one of the 6 portfolio projects by name
+- For MERN: tie to a concrete income action (proposal, gig, client email)
+- For German: A2→B1 in Phase 1-2, B1→B2 in Phase 3-4, B2→C1 in Phase 5-6
+- track must be exactly one of: ML, Cloud, Backend, Data, Project, German, MERN
+- priority must be exactly one of: High, Medium, Low
 
-OUTPUT: valid JSON only.`
+OUTPUT: valid JSON only, no markdown fences, no text outside the JSON object.
+{
+  "message": "2-3 sentence response explaining what you created and why",
+  "tasks": [
+    {
+      "title": "Specific actionable task with concrete deliverable",
+      "track": "ML",
+      "priority": "High",
+      "hours": 1.5,
+      "notes": "Resource or extra context"
+    }
+  ]
+}`
 
-const VALID_TRACKS = ['ML', 'Cloud', 'Backend', 'Data', 'Project', 'German', 'MERN']
-const VALID_PRIORITIES = ['High', 'Medium', 'Low']
+const VALID_TRACKS     = ['ML', 'Cloud', 'Backend', 'Data', 'Project', 'German', 'MERN'] as const
+const VALID_PRIORITIES = ['High', 'Medium', 'Low'] as const
 
 export async function POST(req: NextRequest) {
   const supabase = createServerSupabaseClient()
@@ -38,47 +55,49 @@ export async function POST(req: NextRequest) {
   try {
     const { prompt, week, phase, dayFocus } = await req.json()
 
-    // Using Gemini 3.1 Flash-Lite for 2026 Free Tier stability
+    // gemini-1.5-flash: free tier — 15 req/min, 1 million tokens/day
+    // gemini-2.0-flash: also free but check your AI Studio quota
     const model = genAI.getGenerativeModel({
-      model: 'gemini-3.1-flash-lite', 
+      model: 'gemini-1.5-flash',
       generationConfig: {
-        responseMimeType: 'application/json',
+        responseMimeType: 'application/json', // forces valid JSON output — no markdown wrapping
         temperature: 0.7,
+        maxOutputTokens: 1024,
       },
     })
 
-    const userContext = `Current week: ${week}/104 | Phase: ${phase} | Focus: ${dayFocus} | Request: ${prompt}`
+    const userContext = `Current week: ${week}/104 | Phase: ${phase} | Today's focus: ${dayFocus} | Request: ${prompt}`
 
-    const result = await model.generateContent([
-      { text: SYSTEM_PROMPT },
-      { text: userContext }
-    ])
+    // Gemini takes a single string — prepend system prompt as context
+    const result = await model.generateContent(`${SYSTEM_PROMPT}\n\n${userContext}`)
+    const text   = result.response.text()
+    const data   = JSON.parse(text)
 
-    const text = result.response.text()
-    const data = JSON.parse(text)
-
-    // Hard Sanitization to prevent "bg" undefined runtime errors in UI
-    if (data.tasks && Array.isArray(data.tasks)) {
+    // Sanitise every field — AI can hallucinate track/priority values
+    if (Array.isArray(data.tasks)) {
       data.tasks = data.tasks.map((t: any) => ({
-        title: typeof t.title === 'string' ? t.title : 'Updated Roadmap Task',
-        track: VALID_TRACKS.includes(t.track) ? t.track : 'ML',
+        ...t,
+        title:    typeof t.title === 'string' && t.title.length > 0 ? t.title : 'Review roadmap task',
+        track:    VALID_TRACKS.includes(t.track)        ? t.track    : 'ML',
         priority: VALID_PRIORITIES.includes(t.priority) ? t.priority : 'Medium',
-        hours: typeof t.hours === 'number' ? t.hours : 1.5,
-        notes: typeof t.notes === 'string' ? t.notes : '',
+        hours:    typeof t.hours === 'number' && t.hours > 0 ? t.hours : 1.5,
+        notes:    typeof t.notes === 'string' ? t.notes : '',
       }))
     }
 
     return NextResponse.json(data)
 
   } catch (err: any) {
-    console.error('Agent Error:', err)
-    // Return structured fallback so the frontend can still render something
+    console.error('Gemini Agent Error:', err)
+    // Fallback tasks so the UI never shows a blank error
     return NextResponse.json({
-      message: "I'm recalibrating my systems. Here are your baseline targets for today.",
+      message: 'Gemini is temporarily unavailable. Here are default tasks to keep you on track.',
       tasks: [
-        { title: "Review Phase 1 Python & Docker fundamentals", track: 'ML', priority: 'High', hours: 1.5, notes: 'Stay consistent with the roadmap.' },
-        { title: "German vocab drill: 20 minutes", track: 'German', priority: 'Medium', hours: 0.5, notes: 'Focus on A2/B1 transitions.' }
-      ]
+        { title: "Open your Notion roadmap board and identify today's #1 priority task", track: 'ML',     priority: 'High',   hours: 0.5,  notes: 'Never start the day without a clear target.' },
+        { title: 'Add 20 Anki flashcards from this week\'s study material',              track: 'ML',     priority: 'Medium', hours: 0.5,  notes: '' },
+        { title: 'German: 15-min Duolingo + write 5 sentences using this week\'s vocab', track: 'German', priority: 'Medium', hours: 0.25, notes: '' },
+      ],
     })
   }
 }
+

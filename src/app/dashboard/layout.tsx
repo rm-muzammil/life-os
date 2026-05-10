@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase'
 import { getCurrentPhase, getCurrentWeek, TOTAL_WEEKS } from '@/types'
 import {
   LayoutDashboard, KanbanSquare, Flame, BarChart3,
-  Bot, LogOut, Zap, ChevronRight,
+  Bot, LogOut, Zap, ChevronRight, Settings,
 } from 'lucide-react'
 
 const NAV = [
@@ -15,6 +15,7 @@ const NAV = [
   { href: '/streak',      icon: Flame,           label: 'Streak',     color: '#3ddc84' },
   { href: '/analytics',   icon: BarChart3,       label: 'Analytics',  color: '#f59e0b' },
   { href: '/agent',       icon: Bot,             label: 'AI Agent',   color: '#ec4899' },
+  { href: '/settings',   icon: Settings,        label: 'Settings',   color: '#94a3b8' },
 ]
 
 const TRACKS = [
