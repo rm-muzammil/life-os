@@ -87,7 +87,7 @@ export default function StreakPage() {
     const existing = streaks.find(s => s.date === today)
     if (existing) {
       await supabase.from('streaks').update({ level }).eq('id', existing.id)
-      setStreaks(prev => prev.map(s => s.date === today ? { ...s, level } : s))
+      setStreaks(prev => prev.map(s => s.date === today ? { ...s, level:level as 0|1|2|3|4 } : s))
     } else {
       const { data } = await supabase.from('streaks').insert({ user_id: user.id, date: today, level }).select().single()
       if (data) setStreaks(prev => [...prev, data])
