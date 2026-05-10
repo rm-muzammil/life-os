@@ -1,0 +1,101 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Design Tokens ─────────────────────────────────────── */
+:root {
+  --bg:      #0a0a0f;
+  --bg2:     #111118;
+  --bg3:     #1a1a24;
+  --bg4:     #22222f;
+  --border:  #2a2a3a;
+  --border2: #3a3a50;
+  --text:    #e8e8f0;
+  --text2:   #9090a8;
+  --text3:   #5a5a72;
+
+  --accent:  #7c5cfc;
+  --accent2: #5c8afc;
+  --green:   #3ddc84;
+  --amber:   #fca83c;
+  --red:     #fc5c7c;
+  --teal:    #3cdcdc;
+  --pink:    #fc3ca0;
+
+  /* Track colours */
+  --ml:      #7c5cfc;
+  --cloud:   #3b82f6;
+  --backend: #10b981;
+  --data:    #f59e0b;
+  --project: #ef4444;
+  --german:  #ec4899;
+  --mern:    #14b8a6;
+
+  --r:  8px;
+  --r2: 12px;
+  --r3: 16px;
+  --r4: 20px;
+}
+
+/* ── Base ───────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { color-scheme: dark; }
+
+body {
+  margin: 0;
+  font-family: var(--font-syne, system-ui), sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Scrollbars ─────────────────────────────────────────── */
+::-webkit-scrollbar        { width: 5px; height: 5px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: var(--border2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+/* ── Utilities ──────────────────────────────────────────── */
+.mono { font-family: var(--font-mono, monospace); }
+
+/* Streak grid levels */
+.streak-0 { background: #1c1c28; }
+.streak-1 { background: #1a3d2b; }
+.streak-2 { background: #256c3a; }
+.streak-3 { background: #2ea84a; }
+.streak-4 { background: #3ddc84; box-shadow: 0 0 6px rgba(61,220,132,0.35); }
+
+/* ── Animations ─────────────────────────────────────────── */
+@keyframes slideUp {
+  from { transform: translateY(8px); opacity: 0; }
+  to   { transform: translateY(0);   opacity: 1; }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0 rgba(124,92,252,0.4); }
+  70%  { box-shadow: 0 0 0 8px rgba(124,92,252,0);  }
+  100% { box-shadow: 0 0 0 0 rgba(124,92,252,0);    }
+}
+
+.animate-slide-up  { animation: slideUp 0.3s ease both; }
+.animate-fade-in   { animation: fadeIn  0.2s ease both; }
+.pulse-accent      { animation: pulse-ring 2s ease infinite; }
+
+/* Staggered children */
+.stagger > *:nth-child(1) { animation-delay: 0ms;   }
+.stagger > *:nth-child(2) { animation-delay: 60ms;  }
+.stagger > *:nth-child(3) { animation-delay: 120ms; }
+.stagger > *:nth-child(4) { animation-delay: 180ms; }
+.stagger > *:nth-child(5) { animation-delay: 240ms; }
+.stagger > *:nth-child(6) { animation-delay: 300ms; }
+
+/* ── Focus ──────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
