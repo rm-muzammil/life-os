@@ -4,37 +4,34 @@
 
 /* ── Design Tokens ─────────────────────────────────────── */
 :root {
-  --bg:      #0a0a0f;
-  --bg2:     #111118;
-  --bg3:     #1a1a24;
-  --bg4:     #22222f;
-  --border:  #2a2a3a;
-  --border2: #3a3a50;
-  --text:    #e8e8f0;
-  --text2:   #9090a8;
-  --text3:   #5a5a72;
+  /* Base */
+  --bg:      #09090b;
+  --surface: #111113;
+  --surface2:#18181b;
+  --surface3:#27272a;
 
-  --accent:  #7c5cfc;
-  --accent2: #5c8afc;
-  --green:   #3ddc84;
-  --amber:   #fca83c;
-  --red:     #fc5c7c;
-  --teal:    #3cdcdc;
-  --pink:    #fc3ca0;
+  /* Borders */
+  --border:  #27272a;
+  --border2: #3f3f46;
 
-  /* Track colours */
-  --ml:      #7c5cfc;
-  --cloud:   #3b82f6;
-  --backend: #10b981;
-  --data:    #f59e0b;
-  --project: #ef4444;
-  --german:  #ec4899;
-  --mern:    #14b8a6;
+  /* Text */
+  --text:    #fafafa;
+  --text2:   #a1a1aa;
+  --text3:   #71717a;
 
-  --r:  8px;
-  --r2: 12px;
-  --r3: 16px;
-  --r4: 20px;
+  /* Brand */
+  --accent:  #8b5cf6;
+  --accent2: #6366f1;
+
+  /* States */
+  --green:   #22c55e;
+  --amber:   #f59e0b;
+  --red:     #ef4444;
+
+  /* Radius */
+  --r: 10px;
+  --r2: 14px;
+  --r3: 18px;
 }
 
 /* ── Base ───────────────────────────────────────────────── */
@@ -44,7 +41,7 @@ html { color-scheme: dark; }
 
 body {
   margin: 0;
-  font-family: var(--font-syne, system-ui), sans-serif;
+  font-family: var(--font-inter), sans-serif;
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;

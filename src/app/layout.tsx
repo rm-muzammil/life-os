@@ -3,6 +3,13 @@ import { Syne, JetBrains_Mono } from 'next/font/google'
 import { Toaster } from 'sonner'
 import './globals.css'
 
+import { Inter } from 'next/font/google'
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+})
+
 const syne = Syne({
   subsets: ['latin'],
   variable: '--font-syne',
@@ -25,7 +32,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${syne.variable} ${mono.variable}`}>
-      <body>
+      <body className={`${inter.variable} bg-white text-gray-900 min-h-screen flex flex-col`}>
         {children}
         <Toaster
           position="bottom-right"
