@@ -1,69 +1,68 @@
-// src/hooks/useDailySeed.ts
-//
-// Drop this hook into the Dashboard page.
-// On first render each day it calls /api/seed-today.
-// Uses localStorage to track "last seeded date" so it only runs once per day.
-// Shows a toast when tasks are seeded.
-
 'use client'
 
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
+// 1. Module-level variable (exists outside the hook lifecycle)
+// This acts as a "Global Lock" for this specific browser tab session.
+let isRequestInFlight = false;
+
 interface SeedResult {
   seeded: boolean
   count: number
-  source: 'roadmap' | 'ai_generated'
+  source: 'hybrid' | 'fallback'
   week: number
   day: string
   reason?: string
 }
 
 export function useDailySeed(onSeeded?: () => void) {
-  const [seeding,    setSeeding]    = useState(false)
-  const [seedResult, setSeedResult] = useState<SeedResult | null>(null)
+  const [seeding, setSeeding] = useState(false)
 
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0]
-    const key   = `roadmap-seeded-${today}`
+    const key = `roadmap-seeded-${today}`
 
-    // Already seeded today? Skip (localStorage check = instant, no API call)
+    // 2. Instant exits
     if (localStorage.getItem(key) === 'true') return
+    if (isRequestInFlight) return 
 
     async function seed() {
+      // 3. Lock it immediately
+      isRequestInFlight = true
       setSeeding(true)
+
       try {
-        const res  = await fetch('/api/seed-today', { method: 'POST' })
+        const res = await fetch('/api/seed-today', { method: 'POST' })
+        
+        if (!res.ok) throw new Error('Seed request failed')
+        
         const data = await res.json() as SeedResult
 
-        setSeedResult(data)
-
-        if (data.seeded && data.count > 0) {
+        if (data.seeded || data.reason === 'already_seeded') {
           localStorage.setItem(key, 'true')
-          toast.success(
-            `📋 ${data.count} tasks loaded for today`,
-            {
-              description: `Week ${data.week} · ${data.day} · from ${data.source === 'roadmap' ? 'your roadmap plan' : 'AI generation'}`,
-              duration: 4000,
-            }
-          )
-          onSeeded?.()
-        } else if (data.reason === 'already_seeded') {
-          // Silently mark as done so we don't keep calling the API
-          localStorage.setItem(key, 'true')
+          
+          if (data.seeded && data.count > 0) {
+            toast.success(`📋 ${data.count} tasks loaded for today`, {
+              description: `Week ${data.week} · ${data.day}`,
+            })
+            onSeeded?.()
+          }
         }
       } catch (err) {
         console.error('Daily seed failed:', err)
-        // Don't show error to user — fail silently
+        // If it fails, we UNLOCK so the user can try again on refresh
+        isRequestInFlight = false 
       } finally {
         setSeeding(false)
+        // Note: We don't set isRequestInFlight to false if successful 
+        // because we want the localStorage to handle it from then on.
       }
     }
 
-    // Small delay so dashboard renders first, then seeds
-    const timer = setTimeout(seed, 800)
+    const timer = setTimeout(seed, 1000)
     return () => clearTimeout(timer)
-  }, [])
+  }, [onSeeded])
 
-  return { seeding, seedResult }
+  return { seeding }
 }

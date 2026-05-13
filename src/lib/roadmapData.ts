@@ -1698,16 +1698,6 @@ export const ROADMAP_MILESTONES: ExcelMilestone[] = [
   },
 ]
 
-// Day of week -> which tracks to surface (mirrors your weekly schedule)
-const DAY_TRACKS: Record<number, Array<keyof ExcelWeek>> = {
-  0: ['german', 'mern'],            // Sunday  — review + plan
-  1: ['ml', 'german'],               // Monday  — ML focus
-  2: ['project', 'backend'],         // Tuesday — build
-  3: ['cloud', 'backend'],           // Wednesday — cloud + infra
-  4: ['project', 'data'],            // Thursday — build + data
-  5: ['german', 'mern'],             // Friday  — german + finance
-  6: ['ml', 'cloud', 'project'],     // Saturday — deep sprint
-}
 
 const TRACK_MAP: Partial<Record<keyof ExcelWeek, TaskTrack>> = {
   ml: 'ML', cloud: 'Cloud', backend: 'Backend',
@@ -1723,6 +1713,30 @@ const HOURS_MAP: Partial<Record<keyof ExcelWeek, number>> = {
   ml: 1.5, project: 2, cloud: 1.5, backend: 1, data: 1, german: 0.5, mern: 0.5,
 }
 
+
+const EMPTY_VALS = new Set(['', '\u2014', '\u2014', '-', '\u2013'])
+
+function isEmpty(val: string): boolean {
+  if (!val) return true
+  const trimmed = val.trim()
+  if (EMPTY_VALS.has(trimmed)) return true
+  if (trimmed.startsWith('\u2014') || trimmed.startsWith('\u2013') || trimmed.startsWith('-')) return true
+  return false
+}
+
+// Daily rotation: each track appears on specific days so no repeats
+// Sun: german+mern  Mon: ml  Tue: project+backend  Wed: cloud+data
+// Thu: project+ml   Fri: german+mern  Sat: cloud+backend+data (deep sprint)
+const DAY_SCHEDULE: Record<number, Array<keyof ExcelWeek>> = {
+  0: ['german', 'mern'],
+  1: ['ml'],
+  2: ['project', 'backend'],
+  3: ['cloud', 'data'],
+  4: ['project', 'ml'],
+  5: ['german', 'mern'],
+  6: ['cloud', 'backend', 'data'],
+}
+
 export interface SeedTask {
   title:    string
   track:    TaskTrack
@@ -1731,50 +1745,42 @@ export interface SeedTask {
   notes:    string
 }
 
-const EMPTY_VALS = new Set(['', '—', '—', '-', '–'])
-
-function isEmpty(val: string): boolean {
-  return !val || EMPTY_VALS.has(val.trim().split('(')[0].trim())
-}
-
-/**
- * Returns 3-5 tasks for today, pulled directly from your Excel roadmap.
- * weekNum: getCurrentWeek() from your types/index.ts
- * dayOfWeek: new Date().getDay()  (0=Sun, 1=Mon ... 6=Sat)
- */
-export function getDailyTasksFromRoadmap(
-  weekNum: number,
-  dayOfWeek: number,
-): SeedTask[] {
+export function getDailyTasksFromRoadmap(weekNum: number, dayOfWeek: number): SeedTask[] {
   const week = ROADMAP_WEEKS.find(w => w.week === weekNum)
   if (!week) return []
 
   const tasks: SeedTask[] = []
-  const added = new Set<string>()
+  const todayKeys = DAY_SCHEDULE[dayOfWeek] ?? ['ml']
 
-  function addTask(key: keyof ExcelWeek) {
+  for (const key of todayKeys) {
     const val = week[key] as string
-    if (!val || isEmpty(val) || added.has(key)) return
+    if (!val || isEmpty(val)) continue
     const track = TRACK_MAP[key]
-    if (!track) return
-    added.add(key)
+    if (!track) continue
     tasks.push({
       title:    val,
       track,
       priority: PRIORITY_MAP[key] ?? 'Medium',
-      hours:    HOURS_MAP[key] ?? 1,
+      hours:    HOURS_MAP[key]    ?? 1,
       notes:    week.phase,
     })
   }
 
-  // 1. Today's priority tracks first
-  const todayTracks = DAY_TRACKS[dayOfWeek] ?? ['ml', 'project']
-  for (const key of todayTracks) addTask(key)
+  // Monday only: add tools habit reminder
+  if (dayOfWeek === 1 && week.tools && !isEmpty(week.tools)) {
+    tasks.push({
+      title:    'Tools this week: ' + week.tools,
+      track:    'ML',
+      priority: 'Low',
+      hours:    0.5,
+      notes:    'Set up your daily tools habit for this week',
+    })
+  }
 
-  // 2. Sunday: always add the weekly review goal
+  // Sunday: add weekly review goal
   if (dayOfWeek === 0 && week.sundayReview && !isEmpty(week.sundayReview)) {
     tasks.push({
-      title:    `Weekly review: ${week.sundayReview}`,
+      title:    'Weekly review: ' + week.sundayReview,
       track:    'ML',
       priority: 'High',
       hours:    0.5,
@@ -1782,26 +1788,25 @@ export function getDailyTasksFromRoadmap(
     })
   }
 
-  // 3. Fill to minimum 3 tasks from remaining tracks
-  if (tasks.length < 3) {
-    const all: Array<keyof ExcelWeek> =
-      ['ml','cloud','backend','data','project','german','mern']
-    for (const key of all) {
-      if (tasks.length >= 3) break
-      addTask(key)
+  // Fallback: if today's scheduled tracks are all empty in Excel (early weeks),
+  // pull the first non-empty track so the day is never blank
+  if (tasks.length === 0) {
+    const allKeys: Array<keyof ExcelWeek> = ['ml','cloud','german','mern','data','backend','project']
+    for (const key of allKeys) {
+      const val = week[key] as string
+      if (!val || isEmpty(val)) continue
+      const track = TRACK_MAP[key]
+      if (!track) continue
+      tasks.push({
+        title:    val,
+        track,
+        priority: PRIORITY_MAP[key] ?? 'Medium',
+        hours:    HOURS_MAP[key]    ?? 1,
+        notes:    week.phase,
+      })
+      break
     }
   }
 
-  // 4. Always add tools habit (low priority, 0.5h)
-  if (week.tools && !isEmpty(week.tools) && tasks.length < 5) {
-    tasks.push({
-      title:    `Tools: ${week.tools}`,
-      track:    'ML',
-      priority: 'Low',
-      hours:    0.5,
-      notes:    'Daily tools habit from your roadmap',
-    })
-  }
-
-  return tasks.slice(0, 5)
+  return tasks
 }

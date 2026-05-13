@@ -8,11 +8,11 @@ import { createServerSupabaseClient } from '@/lib/supabase-server'
 
 export async function POST(req: NextRequest) {
   const supabase = createServerSupabaseClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const today  = new Date().toISOString().split('T')[0]
-  const userId = session.user.id
+  const userId = user.id
 
   // Delete today's agent-seeded tasks only (keeps your manual tasks)
   const { error, count } = await supabase

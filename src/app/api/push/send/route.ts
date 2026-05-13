@@ -129,8 +129,8 @@ export async function GET(req: NextRequest) {
 // ── POST — Manual send to current user (test button in settings) ──────────────
 export async function POST(req: NextRequest) {
   const supabase = createServerSupabaseClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const weekNum   = getCurrentWeek()
   const dayOfWeek = new Date().getDay()
@@ -140,9 +140,9 @@ export async function POST(req: NextRequest) {
   // Get this user's task count and subscriptions
   const [{ count }, { data: subs }] = await Promise.all([
     supabase.from('tasks').select('*', { count: 'exact', head: true })
-      .eq('user_id', session.user.id).eq('due_date', today),
+      .eq('user_id', user.id).eq('due_date', today),
     supabase.from('push_subscriptions').select('*')
-      .eq('user_id', session.user.id).eq('active', true),
+      .eq('user_id', user.id).eq('active', true),
   ])
 
   if (!subs || subs.length === 0) {
