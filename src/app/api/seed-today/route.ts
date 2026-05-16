@@ -57,7 +57,9 @@ export async function POST(req: NextRequest) {
     .lt('due_date', today)
 
   const titlesThisWeek = (weekTasks ?? []).map(t => t.title)
-  const tracksThisWeek = [...new Set((weekTasks ?? []).map(t => t.track))]
+const tracksThisWeek = Array.from(
+  new Set((weekTasks ?? []).map(t => t.track))
+)
 
   // ── Step 1: Excel main tasks for today ──────────────────────────────────
   let rawTasks = getDailyTasksFromRoadmap(weekNum, dayOfWeek)
