@@ -34,11 +34,10 @@ export async function GET() {
   const streak = tasks.filter(t => t.status === "done").length;
 
   return NextResponse.json({
-    knowledge: {
-      score: Math.round(knowledge),
+
       completion: Math.round(completion),
       streak,
       todayCompleted: completion === 100
-    }
+
   });
 }
