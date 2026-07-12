@@ -26,12 +26,10 @@ export async function middleware(request: NextRequest) {
 
   const { data: { session } } = await supabase.auth.getSession()
 
-  // Redirect unauthenticated users to /auth
   if (!session && !request.nextUrl.pathname.startsWith('/auth')) {
     return NextResponse.redirect(new URL('/auth', request.url))
   }
 
-  // Redirect authenticated users away from /auth
   if (session && request.nextUrl.pathname.startsWith('/auth')) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
@@ -40,5 +38,8 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|api/webhooks).*)'],
+  matcher: [
+    // Exclude /api/report from auth middleware so SK can pull without session
+    '/((?!_next/static|_next/image|favicon.ico|api/webhooks|api/report).*)',
+  ],
 }

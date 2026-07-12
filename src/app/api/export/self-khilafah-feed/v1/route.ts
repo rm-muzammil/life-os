@@ -1,3 +1,4 @@
+// src/app/api/export/self-khilafah-feed/v1/route.ts
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { calculateKnowledge } from "@/lib/knowledge";
