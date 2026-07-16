@@ -35,17 +35,19 @@ export default function BoardPage() {
     setLoading(false)
   }
 
-  async function updateStatus(id: string, status: Task['status']) {
-    await supabase.from('tasks').update({ status, completed_at: status === 'done' ? new Date().toISOString() : null }).eq('id', id)
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, status } : t))
-    if (status === 'done') toast.success('Task complete! 🎉')
-  }
+async function updateStatus(id: string, status: Task['status']) {
+  await supabase.from('tasks').update({ status, completed_at: status === 'done' ? new Date().toISOString() : null }).eq('id', id)
+  setTasks(prev => prev.map(t => t.id === id ? { ...t, status } : t))
+  if (status === 'done') toast.success('Task complete! 🎉')
+  fetch('/api/push-trigger', { method: 'POST' }).catch(() => {})
+}
 
-  async function deleteTask(id: string) {
-    await supabase.from('tasks').delete().eq('id', id)
-    setTasks(prev => prev.filter(t => t.id !== id))
-    toast.info('Task removed')
-  }
+async function deleteTask(id: string) {
+  await supabase.from('tasks').delete().eq('id', id)
+  setTasks(prev => prev.filter(t => t.id !== id))
+  toast.info('Task removed')
+  fetch('/api/push-trigger', { method: 'POST' }).catch(() => {})
+}
 
   const filtered = filterTrack ? tasks.filter(t => t.track === filterTrack) : tasks
   const cols: { status: Task['status']; label: string; color: string }[] = [
@@ -141,13 +143,14 @@ export default function BoardPage() {
         <AddTaskModal
           onClose={() => setShowModal(false)}
           defaultTrack={filterTrack ?? undefined}
-          onSave={async (task) => {
-            const { data: { user } } = await supabase.auth.getUser()
-            if (!user) return
-            const { data } = await supabase.from('tasks').insert({ ...task, user_id: user.id, due_date: today }).select().single()
-            if (data) { setTasks(prev => [data, ...prev]); toast.success('Task added!') }
-            setShowModal(false)
-          }}
+onSave={async (task) => {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+  const { data } = await supabase.from('tasks').insert({ ...task, user_id: user.id, due_date: today }).select().single()
+  if (data) { setTasks(prev => [data, ...prev]); toast.success('Task added!') }
+  setShowModal(false)
+  fetch('/api/push-trigger', { method: 'POST' }).catch(() => {})
+}}
         />
       )}
     </div>

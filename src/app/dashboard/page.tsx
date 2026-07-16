@@ -64,23 +64,25 @@ export default function DashboardPage() {
     return count
   }
 
-  async function updateStatus(id: string, status: Task['status']) {
-    const task = tasks.find(t => t.id === id)!
-    const update: Partial<Task> = { status, completed_at: status === 'done' ? new Date().toISOString() : null }
-    await supabase.from('tasks').update(update).eq('id', id)
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, ...update } : t))
+async function updateStatus(id: string, status: Task['status']) {
+  const task = tasks.find(t => t.id === id)!
+  const update: Partial<Task> = { status, completed_at: status === 'done' ? new Date().toISOString() : null }
+  await supabase.from('tasks').update(update).eq('id', id)
+  setTasks(prev => prev.map(t => t.id === id ? { ...t, ...update } : t))
 
-    if (status === 'done') {
-      toast.success('Task complete! 🎉')
-      await refreshStreak()
-    }
+  if (status === 'done') {
+    toast.success('Task complete! 🎉')
+    await refreshStreak()
   }
+  fetch('/api/push-trigger', { method: 'POST' }).catch(() => {})
+}
 
-  async function deleteTask(id: string) {
-    await supabase.from('tasks').delete().eq('id', id)
-    setTasks(prev => prev.filter(t => t.id !== id))
-    toast.info('Task removed')
-  }
+async function deleteTask(id: string) {
+  await supabase.from('tasks').delete().eq('id', id)
+  setTasks(prev => prev.filter(t => t.id !== id))
+  toast.info('Task removed')
+  fetch('/api/push-trigger', { method: 'POST' }).catch(() => {})
+}
 
   async function refreshStreak() {
     const { data: { user } } = await supabase.auth.getUser()
@@ -216,13 +218,14 @@ export default function DashboardPage() {
       {showModal && (
         <AddTaskModal
           onClose={() => setShowModal(false)}
-          onSave={async (task) => {
-            const { data: { user } } = await supabase.auth.getUser()
-            if (!user) return
-            const { data } = await supabase.from('tasks').insert({ ...task, user_id: user.id, due_date: today }).select().single()
-            if (data) { setTasks(prev => [...prev, data]); toast.success('Task added!') }
-            setShowModal(false)
-          }}
+onSave={async (task) => {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+  const { data } = await supabase.from('tasks').insert({ ...task, user_id: user.id, due_date: today }).select().single()
+  if (data) { setTasks(prev => [...prev, data]); toast.success('Task added!') }
+  setShowModal(false)
+  fetch('/api/push-trigger', { method: 'POST' }).catch(() => {})
+}}
         />
       )}
     </div>

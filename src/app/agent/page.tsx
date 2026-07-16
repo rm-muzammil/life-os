@@ -78,10 +78,13 @@ export default function AgentPage() {
     }))
 
     const { error } = await supabase.from('tasks').insert(rows)
-    if (error) { toast.error('Failed to add tasks'); return }
+if (error) { toast.error('Failed to add tasks'); return }
 
-    setMessages(prev => prev.map((m, i) => i === msgIdx ? { ...m, added: true } : m))
-    toast.success(`✓ ${rows.length} tasks added to your board!`)
+setMessages(prev => prev.map((m, i) => i === msgIdx ? { ...m, added: true } : m))
+toast.success(`✓ ${rows.length} tasks added to your board!`)
+fetch('/api/push-trigger', { method: 'POST' }).catch(() => {})
+
+
 
     // Log to agent_logs
     await supabase.from('agent_logs').insert({

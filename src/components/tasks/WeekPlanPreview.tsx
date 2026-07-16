@@ -63,8 +63,9 @@ export function WeekPlanPreview({ onTaskAdded }: Props) {
       })
 
       if (error) throw error
-      toast.success('Task added to today\'s board')
-      onTaskAdded?.()
+toast.success('Task added to today\'s board')
+fetch('/api/push-trigger', { method: 'POST' }).catch(() => {})
+onTaskAdded?.()
     } catch (err) {
       toast.error('Failed to add task')
     } finally {
