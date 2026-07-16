@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 
+import { waitUntil } from '@vercel/functions'
+import { pushToSelfKhilafah } from '@/lib/push'
+
 // GET /api/tasks?date=2026-05-10&status=todo&track=ML
 export async function GET(req: NextRequest) {
   const supabase = createServerSupabaseClient()
@@ -34,8 +37,10 @@ export async function POST(req: NextRequest) {
     .insert({ ...body, user_id: user.id })
     .select().single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data, { status: 201 })
+    waitUntil(pushToSelfKhilafah())
+return NextResponse.json(data, { status: 201 })
+
+
 }
 
 // PATCH /api/tasks?id=xxx
@@ -53,8 +58,10 @@ export async function PATCH(req: NextRequest) {
     .update(body).eq('id', id!).eq('user_id', user.id)
     .select().single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data)
+    waitUntil(pushToSelfKhilafah())
+return NextResponse.json(data, { status: 201 })
+
+
 }
 
 // DELETE /api/tasks?id=xxx
